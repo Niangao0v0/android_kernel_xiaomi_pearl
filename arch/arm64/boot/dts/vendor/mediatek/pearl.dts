@@ -3,4 +3,4 @@
 	svp-region-based-size = <0 0x2000000>;
 	svp-page-based-size = <0 0x19000000>;
 };
-#include <cust/pearl.dtsi>
+#include "cust/pearl.dtsi"
