@@ -22,7 +22,7 @@ arch/arm64/boot/Image.gz
 arch/arm64/boot/dts/vendor/mediatek/mt6895.dtb
 arch/arm64/boot/dts/vendor/mediatek/xaga.dtbo
 arch/arm64/boot/dts/vendor/mediatek/plato.dtbo
-arch/arm64/boot/dts/vendor/mediatek/pearl.dtbo
+# arch/arm64/boot/dts/vendor/mediatek/pearl.dtbo
 vmlinux
 System.map
 "
