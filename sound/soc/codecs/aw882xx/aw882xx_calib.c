@@ -53,7 +53,7 @@ static DEFINE_MUTEX(g_cali_lock);
 #define AW_CALI_STORE_EXAMPLE
 #endif
 
-#ifdef AW_CALI_STORE_EXAMPLE
+#if defined(AW_CALI_STORE_EXAMPLE) && 0
  /*write cali to persist file example*/
 #define AWINIC_CALI_FILE_WRITE  "/data/vendor/cit/aw_cali.bin"
 #define AWINIC_CALI_FILE_READ  "/mnt/vendor/persist/factory/audio/aw_cali.bin"
@@ -199,7 +199,10 @@ int aw882xx_cali_read_re_from_nvram(int32_t *cali_re, int32_t channel)
 	return 0;
 #endif
 #else
-	return 0;
+	/* NVRAM cali read is not wired up on this platform; report failure so
+	 * the caller falls back to the default Re instead of treating the
+	 * uninitialized 0 value as a valid out-of-range calibration. */
+	return -1;
 #endif
 }
 
