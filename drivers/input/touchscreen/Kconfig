@@ -15,6 +15,7 @@ if INPUT_TOUCHSCREEN
 source "drivers/input/touchscreen/L2m_fts_spi/Kconfig"
 source "drivers/input/touchscreen/L11_fts_spi/Kconfig"
 source "drivers/input/touchscreen/xiaomi/Kconfig"
+source "drivers/input/touchscreen/m9_synaptics_s3907/Kconfig"
 source "drivers/input/touchscreen/L11a_fts_spi/Kconfig"
 source "drivers/input/touchscreen/NVT36672C/Kconfig"
 source "drivers/input/touchscreen/NVT36672C_NEW/Kconfig"
