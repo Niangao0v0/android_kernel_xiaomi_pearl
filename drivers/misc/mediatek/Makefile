@@ -95,7 +95,7 @@ endif
 ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"xaga")
 subdir-ccflags-y += -DXAGA_CAM
 endif
-ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"pearl")
+ifneq ($(filter "pearl" "yuechu",$(CONFIG_BUILD_PRODUCT_NAME)),)
 subdir-ccflags-y += -DPEARL_CAM
 endif
 ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"plato")
