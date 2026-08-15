@@ -219,10 +219,7 @@ struct gf_device {
 	u8 wait_finger_down;
 #ifdef CONFIG_OF
 	struct pinctrl *pinctrl_gpios;
-	struct pinctrl_state *pins_eint_default;
-	struct pinctrl_state *pins_eint_pulldown;
-	struct pinctrl_state *pins_spiio_spi_mode;
-	struct pinctrl_state *pins_spiio_gpio_mode;
+	struct pinctrl_state *pins_irq;
 	struct pinctrl_state *pins_miso_spi, *pins_miso_pullhigh,
 	    *pins_miso_pulllow;
 	struct pinctrl_state *pins_reset_high, *pins_reset_low;

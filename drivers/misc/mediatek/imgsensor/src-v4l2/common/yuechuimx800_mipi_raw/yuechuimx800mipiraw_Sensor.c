@@ -359,13 +359,10 @@ static struct SENSOR_VC_INFO_STRUCT SENSOR_VC_INFO[] = {
 	},
 	{/* cust9 */
 		0x04, 0x0a, 0x00, 0x08, 0x40, 0x00, //custom4
-		{
-			{VC_STAGGER_NE, 0x00, 0x2b, 4096, 2304},
-			{VC_STAGGER_ME, 0x01, 0x2b, 4096, 2304},
-			{VC_PDAF_STATS_NE_PIX_1, 0x03, 0x2b, 4096, 576},
-			{VC_PDAF_STATS_ME_PIX_1, 0x04, 0x2b, 4096, 576},
-		},
-		1
+		0x00, 0x2b, 4096, 2304,
+		0x01, 0x2b, 4096, 2304,
+		0x03, 0x2b, 4096, 576,
+		0x04, 0x2b, 4096, 576
 	},
 	{/* cust10, 8k 30fps */
 		0x03, 0x0a, 0x00, 0x08, 0x40, 0x00,
@@ -1968,47 +1965,6 @@ static int control(struct subdrv_ctx *ctx,
 
 	return ERROR_NONE;
 }	/* control(ctx) */
-
-static void extend_frame_length(struct subdrv_ctx *ctx, kal_uint32 ns)
-{
-	int i;
-	kal_uint32 old_fl = ctx->frame_length;
-	kal_uint32 calc_fl = 0;
-	kal_uint32 readoutLength = ctx->readout_length;
-	kal_uint32 readMargin = ctx->read_margin;
-	kal_uint32 per_frame_ns = (kal_uint32)(((unsigned long long)ctx->frame_length *
-		(unsigned long long)ctx->line_length * 1000000000) / (unsigned long long)ctx->pclk);
-
-	/* NEED TO FIX start: support 1exp-2exp only; 3exp-?exp instead */
-	if (previous_exp_cnt == 1)
-		ns = 10000000;
-
-	if (ns)
-		ctx->frame_length = (kal_uint32)(((unsigned long long)(per_frame_ns + ns)) *
-			ctx->frame_length / per_frame_ns);
-
-	/* fl constraint: normal DOL behavior while stagger seamless switch */
-	if (previous_exp_cnt > 1) {
-		calc_fl = (readoutLength + readMargin);
-		for (i = 1; i < previous_exp_cnt; i++)
-			calc_fl += (previous_exp[i] + imgsensor_info.margin);
-
-		ctx->frame_length = max(calc_fl, ctx->frame_length);
-	}
-	/* NEED TO FIX end */
-
-	write_cmos_sensor_8(ctx, 0x0104, 0x01);
-	write_frame_len(ctx, ctx->frame_length);
-	write_cmos_sensor_8(ctx, 0x0104, 0x00);
-
-
-	ctx->extend_frame_length_en = KAL_TRUE;
-
-	ns = (kal_uint32)(((unsigned long long)(ctx->frame_length - old_fl) *
-		(unsigned long long)ctx->line_length * 1000000000) / (unsigned long long)ctx->pclk);
-	IMX800_LOG_INF("new frame len = %d, old frame len = %d, per_frame_ns = %d, add more %d ns",
-		ctx->frame_length, old_fl, per_frame_ns, ns);
-}
 
 static void wait_frame_done(struct subdrv_ctx *ctx, enum SENSOR_SCENARIO_ID_ENUM scenario_id)
 {
@@ -3871,4 +3827,3 @@ const struct subdrv_entry yuechuimx800_mipi_raw_entry = {
 	.pw_seq_cnt = ARRAY_SIZE(pw_seq),
 	.ops        = &ops,
 };
-

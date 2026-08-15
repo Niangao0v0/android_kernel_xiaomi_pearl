@@ -285,15 +285,6 @@ static void yuechuimx355_set_pdaf_reg_setting(struct subdrv_ctx *ctx,
 #endif
 
 
-static kal_uint16 read_cmos_eeprom_8(struct subdrv_ctx *ctx, kal_uint16 addr)
-{
-	u8 val;
-
-	adaptor_i2c_rd_u8(ctx->i2c_client, 0xA0 >> 1, addr, &val);
-
-	return (u16)val;
-}
-
 static void read_sensor_Cali(struct subdrv_ctx *ctx)
 {
 	ctx->is_read_preload_eeprom = 1;
@@ -1895,9 +1886,6 @@ static int feature_control(
 	struct SENSOR_VC_INFO_STRUCT *pvcinfo;
 #endif
 	struct SENSOR_WINSIZE_INFO_STRUCT *wininfo;
-	struct SET_SENSOR_AWB_GAIN *pSetSensorAWB = NULL;
-	uint32_t *pAeCtrls;
-	uint32_t *pScenarios;
 	/* SET_SENSOR_AWB_GAIN *pSetSensorAWB
 	 *  = (SET_SENSOR_AWB_GAIN *)feature_para;
 	 */
@@ -2781,4 +2769,3 @@ const struct subdrv_entry yuechuimx355_mipi_raw_entry = {
 	.pw_seq_cnt = ARRAY_SIZE(pw_seq),
 	.ops        = &ops,
 };
-

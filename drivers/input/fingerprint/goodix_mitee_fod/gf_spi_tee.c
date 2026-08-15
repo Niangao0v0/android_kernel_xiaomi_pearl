@@ -275,28 +275,16 @@ static int gf_get_gpio_dts_info(struct gf_device *gf_dev)
 		gf_debug(ERR_LOG, "%s device node is null\n", __func__);
 	}
 
-	gf_dev->pins_spiio_spi_mode =
-	    pinctrl_lookup_state(gf_dev->pinctrl_gpios, "spiio_spi_mode");
-	if (IS_ERR(gf_dev->pins_spiio_spi_mode)) {
-		ret = PTR_ERR(gf_dev->pins_spiio_spi_mode);
-		gf_debug(ERR_LOG, "%s can't find fingerprint pinctrl spiio_spi_mode\n",
-			 __func__);
-		//return ret;
-	}
-	else {
-		pinctrl_select_state(gf_dev->pinctrl_gpios, gf_dev->pins_spiio_spi_mode);
-	}
-
-	gf_dev->pins_spiio_gpio_mode =
-	    pinctrl_lookup_state(gf_dev->pinctrl_gpios, "spiio_gpio_mode");
-	if (IS_ERR(gf_dev->pins_spiio_gpio_mode)) {
-		ret = PTR_ERR(gf_dev->pins_spiio_gpio_mode);
-		gf_debug(ERR_LOG, "%s can't find fingerprint spiio_gpio_mode\n",
+	gf_dev->pins_irq =
+	    pinctrl_lookup_state(gf_dev->pinctrl_gpios, "default");
+	if (IS_ERR(gf_dev->pins_irq)) {
+		ret = PTR_ERR(gf_dev->pins_irq);
+		gf_debug(ERR_LOG, "%s can't find fingerprint pinctrl irq\n",
 			 __func__);
 		//return ret;
 	}
 
-	gf_debug(ERR_LOG, "[gf][goodix_test] %s pins spi found\n", __func__);
+	gf_debug(ERR_LOG, "[gf][goodix_test] %s goodix_irq found\n", __func__);
 
 #ifdef SUPPORT_REE_OSWEGO
 	gf_dev->pins_miso_spi =
@@ -344,32 +332,22 @@ static int gf_get_gpio_dts_info(struct gf_device *gf_dev)
 			 "%s can't find fingerprint pinctrl reset_low\n",
 			 __func__);
 		return ret;
-	} else {
-		pinctrl_select_state(gf_dev->pinctrl_gpios, gf_dev->pins_reset_low);
 	}
-
-	gf_dev->pins_eint_default =
-		pinctrl_lookup_state(gf_dev->pinctrl_gpios, "eint_default");
-	if (IS_ERR(gf_dev->pins_eint_default)) {
-		ret = PTR_ERR(gf_dev->pins_eint_default);
+	gf_dev->pins_spi_cs =
+	    pinctrl_lookup_state(gf_dev->pinctrl_gpios, "spi_cs");
+	if (IS_ERR(gf_dev->pins_spi_cs)) {
+		/* fallback: some dtbo overlay exposes "spiio_spi_mode" instead
+		 * of "spi_cs" (muxes the full SPI3 pin set) */
+		gf_dev->pins_spi_cs =
+		    pinctrl_lookup_state(gf_dev->pinctrl_gpios, "spiio_spi_mode");
+	}
+	if (IS_ERR(gf_dev->pins_spi_cs)) {
+		ret = PTR_ERR(gf_dev->pins_spi_cs);
 		gf_debug(ERR_LOG,
-			 "%s can't find fingerprint pinctrl pins_eint_default\n",
+			 "%s can't find fingerprint pinctrl pins_spi_cs\n",
 			 __func__);
 		return ret;
 	}
-
-	gf_dev->pins_eint_pulldown =
-	    pinctrl_lookup_state(gf_dev->pinctrl_gpios, "eint_pulldown");
-	if (IS_ERR(gf_dev->pins_eint_pulldown)) {
-		ret = PTR_ERR(gf_dev->pins_eint_pulldown);
-		gf_debug(ERR_LOG,
-			 "%s can't find fingerprint pinctrl pins_eint_pulldown\n",
-			 __func__);
-		return ret;
-	} else {
-		pinctrl_select_state(gf_dev->pinctrl_gpios, gf_dev->pins_eint_pulldown);
-	}
-
 	gf_debug(DEBUG_LOG, "%s, get pinctrl success!\n", __func__);
 #endif
 	return 0;
@@ -418,7 +396,7 @@ static void gf_hw_power_enable(struct gf_device *gf_dev, u8 onoff)
 		enable = 1;
 	}
 }
-/*
+
 static int gf_set_spi_cs_mode(struct gf_device *gf_dev)
 {
 	int ret = 0;
@@ -436,7 +414,7 @@ static int gf_set_spi_cs_mode(struct gf_device *gf_dev)
 	}
 	return ret;
 }
-*/
+
 static void gf_spi_clk_enable(struct gf_device *gf_dev, u8 bonoff)
 {
 	if (bonoff) {
@@ -1479,37 +1457,7 @@ static ssize_t gf_debug_store(struct device *dev,
 		gf_spi_read_bytes(gf_dev, 0x0000, 4, rx_test);
 		printk("%s rx_test chip id:0x%x 0x%x 0x%x 0x%x \n", __func__,
 		       rx_test[0], rx_test[1], rx_test[2], rx_test[3]);
-	} else if (!strncmp(buf, "-14", 3)) {
-		gf_debug(INFO_LOG, "%s: parameter is -14, rest test --> 0x\n", __func__);
-#ifdef CONFIG_OF
-                pinctrl_select_state(gf_dev->pinctrl_gpios,
-                             gf_dev->pins_reset_low);
-                mdelay(15);
-                pr_err("%s %d now reset sensor pull high\n", __func__,
-                       __LINE__);
-                pinctrl_select_state(gf_dev->pinctrl_gpios,
-                             gf_dev->pins_reset_high);
-#endif
-	} else if (!strncmp(buf, "-15", 3)) {
-		gf_debug(INFO_LOG, "%s: parameter is -15, power reset test --> 0x\n", __func__);
-		retval = regulator_set_load(buck, 0);
-		if (retval < 0) {
-			gf_debug(INFO_LOG, "regulator_set_load failed");
-		}
-		retval = regulator_disable(buck);
-		if (retval < 0) {
-			gf_debug(ERR_LOG, "%s, regulator_disable fail!!\n", __func__);
-		}
-		mdelay(20);
-		retval = regulator_set_load(buck, 200000);
-		if (retval < 0) {
-			gf_debug(INFO_LOG, "regulator_set_load failed");
-		}
-		retval = regulator_enable(buck);
-		if (retval < 0) {
-			gf_debug(ERR_LOG, "%s, regulator_enable fail!!\n", __func__);
-		}
-	}else {
+	} else {
 		gf_debug(ERR_LOG, "%s: wrong parameter!===============\n",
 			 __func__);
 	}
@@ -2188,7 +2136,7 @@ static struct spi_driver gf_spi_driver = {
 static int gf_probe(struct spi_device *spi)
 {
 	struct gf_device *gf_dev = NULL;
-	int status = -EINVAL, ret = 0;
+	int status = -EINVAL;
 	unsigned char rx_test[10] = { 0 };
 
 	// int retval = 0;
@@ -2268,6 +2216,8 @@ static int gf_probe(struct spi_device *spi)
 		goto err_freqbuff;
 	}
 
+
+
 	buck = regulator_get(NULL, "mt6368_vfp");
 	if (buck == NULL) {
 		gf_debug(INFO_LOG, "regulator_get  vfp fail");
@@ -2275,6 +2225,7 @@ static int gf_probe(struct spi_device *spi)
 	}
 	gf_debug(ERR_LOG, "%s, try to get mt6368_vfp success\n", __func__);
 
+	gf_debug(ERR_LOG, "%s, try to set  \n", __func__);
 	status = regulator_set_voltage(buck, 3100000, 3100000);
 
 	if (status < 0) {
@@ -2302,24 +2253,9 @@ static int gf_probe(struct spi_device *spi)
 	pr_err("%s %d now get dts info done!", __func__, __LINE__);
 	/*enable the power */
 	gf_hw_power_enable(gf_dev, 1);
-	if (!IS_ERR(gf_dev->pins_eint_default)) {
-		pinctrl_select_state(gf_dev->pinctrl_gpios, gf_dev->pins_eint_default);
-	}
-
-#if defined(CONFIG_PRODUCT_YUECHU_FP)
 	mdelay(3);
-#endif
-//	gf_set_spi_cs_mode(gf_dev);
+	gf_set_spi_cs_mode(gf_dev);
 	gf_bypass_flash_gpio_cfg();
-	if (IS_ERR(gf_dev->pins_spiio_spi_mode)) {
-		ret = PTR_ERR(gf_dev->pins_spiio_spi_mode);
-		gf_debug(ERR_LOG, "%s fingerprint pinctrl spiio_spi_mode NULL\n",
-			 __func__);
-		return -1;
-	}
-	else {
-		pinctrl_select_state(gf_dev->pinctrl_gpios, gf_dev->pins_spiio_spi_mode);
-	}
 
 	pr_err("%s %d now enable spi clk API", __func__, __LINE__);
 	gf_spi_clk_enable(gf_dev, 1);
@@ -2344,9 +2280,9 @@ static int gf_probe(struct spi_device *spi)
 	gf_debug(INFO_LOG, "%s rx_test chip id:0x%x 0x%x 0x%x 0x%x \n", __func__,
 	       rx_test[0], rx_test[1], rx_test[2], rx_test[3]);
 
-	if ((rx_test[0] != 0x12) || (rx_test[1] != 0x31)) {
-		gf_debug(ERR_LOG, "%s, fail to get chip id 0x1231. \n", __func__);
 
+	if ((rx_test[0] != 0x12) || (rx_test[1] != 0x31)) {
+		gf_debug(ERR_LOG, "%s, fail to get chip id 0x1231\n", __func__);
 		goodix_fp_exist = false;
 		gf_debug(ERR_LOG,
 			 "%s, get goodix FP sensor chipID fail!!\n", __func__);
@@ -2355,19 +2291,9 @@ static int gf_probe(struct spi_device *spi)
 		//workaround to solve two spi device
 		pr_err("%s cannot find the sensor,now exit\n", __func__);
 		spi_fingerprint = spi;
-		if (!IS_ERR(gf_dev->pins_spiio_gpio_mode)) {
-			pinctrl_select_state(gf_dev->pinctrl_gpios, gf_dev->pins_spiio_gpio_mode);
-		}
-		if (!IS_ERR(gf_dev->pins_reset_low)) {
-			pinctrl_select_state(gf_dev->pinctrl_gpios, gf_dev->pins_reset_low);
-		}
-		if (!IS_ERR(gf_dev->pins_eint_default)) {
-			pinctrl_select_state(gf_dev->pinctrl_gpios, gf_dev->pins_eint_default);
-		}
 		gf_hw_power_enable(gf_dev, 0);
-		regulator_disable(buck);
-		regulator_set_load(buck, 0);
-		regulator_put(buck);
+
+
 		gf_spi_clk_enable(gf_dev, 0);
 		kfree(gf_dev->spi_buffer);
 		mutex_destroy(&gf_dev->buf_lock);
@@ -2534,7 +2460,6 @@ static int gf_probe(struct spi_device *spi)
 	gf_debug(INFO_LOG, "%s probe finished\n", __func__);
 	pr_err("%s %d now disable spi clk API", __func__, __LINE__);
 	gf_spi_clk_enable(gf_dev, 0);
-	dev_set_drvdata(&spi->dev, gf_dev);
 
 	gf_debug(ERR_LOG, "[gf][goodix_test] %s, probe success\n", __func__);
 	FUNC_EXIT();
@@ -2637,19 +2562,9 @@ static int gf_remove(struct spi_device *spi)
 
 	unregister_chrdev_region(gf_dev->devno, 1);
 	class_destroy(gf_dev->class);
-	if (!IS_ERR(gf_dev->pins_spiio_gpio_mode)) {
-		pinctrl_select_state(gf_dev->pinctrl_gpios, gf_dev->pins_spiio_gpio_mode);
-	}
-	if (!IS_ERR(gf_dev->pins_reset_low)) {
-		pinctrl_select_state(gf_dev->pinctrl_gpios, gf_dev->pins_reset_low);
-	}
-	if (!IS_ERR(gf_dev->pins_eint_default)) {
-		pinctrl_select_state(gf_dev->pinctrl_gpios, gf_dev->pins_eint_default);
-	}
 	regulator_disable(buck);
 	regulator_set_load(buck, 0);
 	regulator_put(buck);
-
 	gf_hw_power_enable(gf_dev, 0);
 	gf_spi_clk_enable(gf_dev, 0);
 	pinctrl_put(gf_dev->pinctrl_gpios);
