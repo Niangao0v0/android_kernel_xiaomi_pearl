@@ -475,20 +475,15 @@ struct binder_proc {
  * @delivered_freeze:     list of delivered freeze notification
  *                        (protected by @inner_lock)
  * @lock:            protects binder_alloc fields
- * @dmap             dbitmap to manage available reference descriptors
- *                   (protected by @proc.outer_lock)
  *
  * Extended binder_proc -- needed to add the "cred" and "lock" field
  * without changing the KMI for binder_proc.
- * Extended binder_proc -- needed to add the "dmap" field without
- * changing the KMI for binder_proc.
  */
 struct binder_proc_ext {
 	struct binder_proc proc;
 	const struct cred *cred;
 	struct list_head delivered_freeze;
 	spinlock_t lock;
-	struct dbitmap dmap;
 };
 
 static inline struct binder_proc *

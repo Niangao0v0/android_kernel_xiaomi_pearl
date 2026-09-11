@@ -125,7 +125,7 @@ static int mtu3_ep_enable(struct mtu3_ep *mep)
 	mep->slot = usb_endpoint_xfer_int(desc) ? 0 : mtu->slot;
 
 	/* reserve ep slot for super speed */
-	if (mep->slot && mtu->g.speed >= (enum usb_device_speed)MTU3_SPEED_SUPER) {
+	if (mep->slot && mtu->g.speed >= MTU3_SPEED_SUPER) {
 		switch (mtu->ep_slot_mode) {
 		case MTU3_EP_SLOT_MAX:
 			mep->slot = MTU3_U3_IP_SLOT_MAX;
@@ -348,6 +348,7 @@ static int mtu3_gadget_queue(struct usb_ep *ep,
 	if (mtu3_prepare_transfer(mep)) {
 		dev_info(mtu->dev, "prepare transfer failed\n");
 		ret = -EAGAIN;
+		usb_gadget_unmap_request(&mtu->g, req, mep->is_in);
 		goto error;
 	}
 

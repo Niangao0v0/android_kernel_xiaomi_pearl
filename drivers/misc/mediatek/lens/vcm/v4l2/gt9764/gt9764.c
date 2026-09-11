@@ -155,8 +155,9 @@ static int gt9764_power_off(struct gt9764_device *gt9764)
 
 	if (gt9764->vcamaf_pinctrl && gt9764->vcamaf_off)
 		ret = pinctrl_select_state(gt9764->vcamaf_pinctrl,
-								   gt9764->vcamaf_off);
-									return ret;
+					gt9764->vcamaf_off);
+
+	return ret;
 }
 
 static int gt9764_power_on(struct gt9764_device *gt9764)
@@ -206,17 +207,17 @@ fail:
 static int gt9764_set_ctrl(struct v4l2_ctrl *ctrl)
 {
 #if defined(PEARL_CAM)
-	int ret, val = 0,last_val;
+	int ret, val,last_val;
 	int diff_dac= 0;
 	int nStep_count = 0;
-	int i;
+
 	struct gt9764_device *gt9764 = to_gt9764_vcm(ctrl);
 	diff_dac = GT9764_ORIGIN_FOCUS_POS - gt9764->focus->val;
 	nStep_count = (diff_dac < 0 ? (diff_dac*(-1)) : diff_dac) /GT9764_POWERMOVE_STEPS;
 	last_val = gt9764->focus->val;
 	if (g_u4setinitpos > 0 ){
 		LOG_INF("current diff_dac:%d,nStep_count:%d,val:%d,last_val:%d,g_u4setinitpos:%d",diff_dac,nStep_count,val,last_val,g_u4setinitpos);
-		for (i = 0; i < nStep_count; ++i) {
+		for (int i = 0; i < nStep_count; ++i) {
 			val = GT9764_ORIGIN_FOCUS_POS + (i+1)*(diff_dac < 0 ? GT9764_POWERMOVE_STEPS :(GT9764_POWERMOVE_STEPS*(-1)));
 			ret = gt9764_set_position(gt9764, val);
 			if (ret) {

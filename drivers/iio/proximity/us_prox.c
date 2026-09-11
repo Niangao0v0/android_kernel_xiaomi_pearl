@@ -108,7 +108,7 @@ irqreturn_t iio_pollfunc_us(int irq, void *p)
 int32_t mius_debug_io_open(void)
 {
 
-	pr_debug("[MIUS] %s()", __func__);
+	pr_info("[MIUS] %s()", __func__);
 	if (debug_segment.reserved == 0) {
 		debug_segment.phys =
 			scp_get_reserve_mem_phys(SCP_ELLIPTIC_DEBUG_MEM);
@@ -201,7 +201,7 @@ int us_afe_callback(int data)
 	struct timespec64 ts;
 	ktime_get_ts64(&ts);
 	el_data.timestamp = timespec64_to_ns(&ts);
-	pr_debug("%s: data = %d\n", __func__, data);
+	pr_info("%s: data = %d\n", __func__, data);
 
 	if (!data)
 		el_data.data1 = 0;
@@ -240,8 +240,9 @@ static mius_ipi_scp_to_host_message_header_t *get_header(
 static int mius_data_io_ipi_handler(
 	unsigned int id, void *prdata, void *data, unsigned int len)
 {
+	pr_info("%s: start\n", __func__);
 	static uint16_t current_ipi_counter;
-	__maybe_unused int32_t ret = -1;  // Seemed not be used
+	int32_t ret = -1;
 
 	mius_dram_payload_t *dram_payload =
 		(mius_dram_payload_t *)debug_segment.virt;
@@ -253,11 +254,9 @@ static int mius_data_io_ipi_handler(
 	mius_ipi_scp_to_host_message_header_t *header;
 	void *payload = NULL;
 
-	pr_debug("%s: start\n", __func__);
-
 	header = &ipi_msg->header;
 	payload = ipi_msg->data;
-	pr_debug("MIUS Got data via ipi payload, addr: %p", payload);
+	pr_info("MIUS Got data via ipi payload, addr: %p", payload);
 
 	if ((uint16_t) (target_ipi_message_count - current_ipi_counter) >
 		MIUS_DRAM_PAYLOAD_MAX_OFFSET) {
@@ -284,7 +283,7 @@ static int mius_data_io_ipi_handler(
 		}
 		switch (header->parameter_id) {
 			case ELLIPTIC_ULTRASOUND_PARAM_ID_ENGINE_DATA:
-				pr_debug("MIUS engine data get %u",
+				pr_info("MIUS engine data get %u",
 						header->data_size);
 				if (((uint8_t *)payload)[23] == (uint8_t)66) {
 					pr_debug("MIUS receive far signal");
@@ -456,7 +455,7 @@ static int us_prox_probe(struct platform_device *pdev)
 	int ret = 0;
 	struct us_prox_data *us_prox;
 
-	pr_debug("%s: start\n", __func__);
+	pr_info("%s: start\n", __func__);
 
 	us_prox = kzalloc(sizeof(*us_prox), GFP_KERNEL);
 	if (!us_prox)
@@ -481,7 +480,7 @@ static int us_prox_probe(struct platform_device *pdev)
 			NULL, &usnd_ipi_receive) != SCP_IPI_DONE) {
 		pr_err("%s: scp registration failed ret = %d\n", __func__, ret);
 	}
-	pr_debug("%s: end\n", __func__);
+	pr_info("%s: end\n", __func__);
 	return ret;
 }
 
